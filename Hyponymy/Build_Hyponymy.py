@@ -1,7 +1,8 @@
 import pymysql
 import opencc
-from time import time
 import pickle
+from time import time
+
 dataset = []
 synset = {}
 start = time()
