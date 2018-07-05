@@ -1,0 +1,151 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>力导向图</title>
+</head>
+
+<style>
+    .nodetext {
+        font-family: "Helvetica";
+        font-size: 16px ;
+        fill:#000000;
+    }
+
+    .linetext {
+        font-family:"Helvetica";
+        font-size: 10px ;
+        fill:#0000FF;
+        fill-opacity:1.0;
+    }
+</style>
+
+<body>
+<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script>
+
+    var nodes = [ { name: "手机" , type:"entity"}, { name: "触摸屏", type:"attribute" }, { name: "通信模块" , type:"attribute" },
+        { name: "摄像头" , type:"attribute"}, { name: "按钮" , type:"attribute" }, { name: "闪光灯" , type:"attribute" },
+        { name: "CPU" , type:"attribute" }, { name: "内存" , type:"attribute" }, { name: "存储" , type:"attribute" },
+        { name: "麦克风" , type:"attribute" }, { name: "喇叭" , type:"attribute" }, { name: "台式电脑" , type:"entity"},
+        { name: "主板", type:"attribute"  }, {name: "电源", type:"attribute" }, {name: "固态硬盘", type:"attribute" },
+        { name: "平板电脑" , type:"entity"},{ name: "键盘" , type:"attribute" },{ name: "触控笔" , type:"attribute" }];
+
+    var edges = [  { source : 0  , target: 1 , relation: '包含'} , { source : 0  , target: 2 , relation: '包含'} ,
+        { source : 0  , target: 3 , relation: '包含'} , { source : 0  , target: 4 , relation: '包含'} ,
+        { source : 0  , target: 5 , relation: '包含'} , { source : 0  , target: 6 , relation: '包含'}  ,
+        { source : 0  , target: 7, relation: '包含'} , { source : 0  , target: 8 , relation: '包含'}
+        , { source : 0  , target: 9 , relation: '包含'}, { source : 0  , target: 10 , relation: '包含'}
+        , { source : 11  , target: 3 , relation: '包含'}, { source : 11  , target: 6 , relation: '包含'}
+        , { source : 11  , target: 7 , relation: '包含'}, { source : 11  , target: 8 , relation: '包含'}
+        , { source : 11  , target: 12 , relation: '包含'}, { source : 11  , target: 13 , relation: '包含'}
+        , { source : 11  , target: 14 , relation: '包含'}, { source : 11  , target: 16 , relation: '包含'}
+        , { source : 15  , target: 1 , relation: '包含'}
+        , { source : 15  , target: 2 , relation: '包含'}, { source : 15  , target: 3 , relation: '包含'}
+        , { source : 15  , target: 4 , relation: '包含'}, { source : 15  , target: 6 , relation: '包含'}
+        , { source : 15  , target: 17 , relation: '包含'}, { source : 15  , target: 7 , relation: '包含'}];
+
+    var width = 1000;
+    var height = 1000;
+
+
+    var svg = d3.select("body")
+        .append("svg")
+        .attr("width",width)
+        .attr("height",height);
+
+    var force = d3.layout.force()
+        .nodes(nodes)		//指定节点数组
+        .links(edges)		//指定连线数组
+        .size([width,height])	//指定范围
+        .linkDistance(100)	//指定连线长度
+        .charge(-4000);	//相互之间的作用力
+
+    force.start();	//开始作用
+
+    console.log(nodes);
+    console.log(edges);
+
+    //添加连线
+    var svg_edges = svg.selectAll("line") //设置变量是为了后面进行拖动或点选方便
+        .data(edges)
+        .enter()
+        .append("line")
+        .style("stroke","#ccc")
+        .style("stroke-width",1);
+
+    //添加连线文字
+    var svg_edges_text = svg.selectAll(".linetext")
+        .data(edges)
+        .enter()
+        .append("text")
+        .style("fill", "black")
+        .attr("class","linetext")
+        .text(function(edges){
+            return edges.relation;
+        });
+
+
+    //添加节点
+    var svg_nodes = svg.selectAll("circle")
+        .data(nodes)
+        .enter()
+        .append("circle")
+        .attr("r", function(node){
+            var r;
+            if(node.type=="entity"){
+                r=20;
+            }else{
+                r=14;
+            }
+            return r;
+        })
+        .style("fill",function(node){
+            var color;
+            if(node.type=="entity"){
+                color="#0B1746";
+            }else{
+                color="#87ceeb";
+            }
+            return color;
+        })
+        .call(force.drag);	//使得节点能够拖动
+
+    //添加描述节点的文字
+    var svg_texts = svg.selectAll(".nodetext")
+        .data(nodes)
+        .enter()
+        .append("text")
+        .style("fill", "black")
+        .attr("dx", 25)
+        .attr("dy", 12)
+        .attr("class","nodetext")
+        .text(function(d){
+            return d.name;
+        });
+
+
+    force.on("tick", function(){	//对于每一个时间间隔
+
+        //更新连线坐标
+        svg_edges.attr("x1",function(d){ return d.source.x; })
+            .attr("y1",function(d){ return d.source.y; })
+            .attr("x2",function(d){ return d.target.x; })
+            .attr("y2",function(d){ return d.target.y; });
+
+        //更新连线文字坐标
+        svg_edges_text.attr("x", function(d){ return (d.source.x + d.target.x)/2; })
+            .attr("y", function(d){ return (d.source.y + d.target.y)/2; });
+
+        //更新节点坐标
+        svg_nodes.attr("cx",function(d){ return d.x; })
+            .attr("cy",function(d){ return d.y; });
+
+        //更新文字坐标
+        svg_texts.attr("x", function(d){ return d.x; })
+            .attr("y", function(d){ return d.y; });
+    });
+
+</script>
+
+</body>
+</html>
